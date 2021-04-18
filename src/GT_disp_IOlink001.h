@@ -3,6 +3,7 @@
 
 #define L_CUSTOM_SW gt_CustomSwitch(  0, 430, 280,  50)
 #define R_CUSTOM_SW gt_CustomSwitch(520, 430, 280,  50)
+#define M_CUSTOM_SW gt_CustomSwitch(300, 430, 280,  50)
 #define MENU_SW     gt_CustomSwitch(650,   0, 150,  50)
 #define LOCK_SW     gt_CustomSwitch(  0,   0, 150,  50)
 
@@ -46,8 +47,8 @@
 
 #define X_PAGE6_SW1    50
 #define Y_PAGE6_SW1    95
-#define X_PAGE6_SW2    50
-#define Y_PAGE6_SW2   275
+#define X_PAGE6_SW2   450
+#define Y_PAGE6_SW2    95
 
 #define X_PAGE7_SW1    50
 #define Y_PAGE7_SW1    95
@@ -62,14 +63,26 @@ void gt_clockdisp(int sw_x, int sw_y);
 void gt_page00();
 void gt_page01();
 void gt_page02();
-void gt_page03();
+void gt_page13();
 void gt_page04();
 void gt_page05();
 void gt_page06();
 void gt_page07();
 void gt_page08();
 
+void lock_unlock();
+
 bool emg_on_state = false;
+
+void lock_unlock(){
+    if(lock_flag == true){
+        if(gt_keyanddisp5(0, 430) == 1111){
+            lock_flag = false;
+        }
+    }else{
+        lock_flag = true;
+    }
+}
 
 void gt_dispselect(){
     if(digitalRead(EMG_ON) == HIGH){
@@ -92,7 +105,7 @@ void gt_dispselect(){
             gt_page02();            //キャリブレーションモード
             break;
         case 3:
-            gt_page03();            //充填モード
+            gt_page06();            //充填モード
             break;
         case 4:
             gt_page04();
@@ -109,6 +122,8 @@ void gt_dispselect(){
         case 8:
             gt_page08();            //非常停止画面
             break;
+        case 13:
+            gt_page13();
     }
 }
 
@@ -117,11 +132,12 @@ void gt_dispselect(){
 void gt_page01(){
     if(pgch_flag == true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 4);              //ch=0,sn=5
-    gt_CustomSwitch( 40, 100, 300, 130);    //SW1(キャリブレーション)
-    gt_CustomSwitch(460, 100, 300, 130);    //SW2(充填)
-    gt_CustomSwitch( 40, 280, 300, 130);    //SW3(洗浄)
-    gt_CustomSwitch(460, 280, 300, 130);    //SW4(積算、エラー確認)
+    gt_CustomSwitchMode(0, 5);              //ch=0,sn=5
+    gt_CustomSwitch( 40, 100, 300, 110);    //SW1(キャリブレーション)
+    gt_CustomSwitch(460, 100, 300, 110);    //SW2(充填)
+    gt_CustomSwitch( 40, 235, 300, 110);    //SW3(洗浄)
+    gt_CustomSwitch(460, 235, 300, 110);    //SW4(積算、エラー確認)
+    gt_CustomSwitch( 40, 370, 300, 110);    //SW5(手動)
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
     gt_TouchDataTransmit(1);                //タッチパネル制御データ送信許可
@@ -131,15 +147,15 @@ void gt_page01(){
     gt_setCursor(800, 0);
     if(_eeprom.calib_flag == false){
         if(error_flag == true){
-            gt_CopyFrom(IMAGE_ADDR_PAGE1B, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_3, 800, 800, 480, 0x91);
         }else{
-            gt_CopyFrom(IMAGE_ADDR_PAGE1, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_1, 800, 800, 480, 0x91);
         }
     }else{
         if(error_flag == true){
-            gt_CopyFrom(IMAGE_ADDR_PAGE1C, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_4, 800, 800, 480, 0x91);
         }else{
-            gt_CopyFrom(IMAGE_ADDR_PAGE1A, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_2, 800, 800, 480, 0x91);
         }
     }
 
@@ -185,6 +201,12 @@ void gt_page01(){
                     solvON = false;
                     pgch_flag = true;
                     break;
+                case 5:
+                    pageNum = 13;
+                    digitalWrite(SOLV_PIN_PRESSURE,LOW);
+                    solvON = false;
+                    pgch_flag = true;
+                    break;
             }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
         }
@@ -213,7 +235,12 @@ void gt_page02(){
         //初期画面(非表示エリアに表示してから表示エリアにコピーする)
         //背景描画
         gt_setCursor(800, 0);
-        gt_CopyFrom(IMAGE_ADDR_PAGE2, 800, 800, 480, 0x91);
+        if(lock_flag == true){
+            gt_CopyFrom(IMAGE_ADDR_PAGE5A, 800, 800, 480, 0x91);
+        }else{
+            gt_CopyFrom(IMAGE_ADDR_PAGE5, 800, 800, 480, 0x91);
+        }
+ 
 
         //数値表示
         //gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
@@ -225,7 +252,7 @@ void gt_page02(){
         gt_dispdecimal(filling_vol_now, X_PAGE2_SW2 + 30 + 800, (Y_PAGE2_SW2 + 130) +5);         //入力値初期表示(0)
 
         gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-        gt_dispnum5(_eeprom.filling_vol_goal, 550 + 800, 90);          //入力値初期表示(0)
+        gt_dispdecimal(_eeprom.filling_vol_goal, 500 + 800, 90);          //入力値初期表示(0)
         gt_dispnum7(_eeprom.filling_vol_accum, 500 + 800, 210);         //入力値初期表示(0)
         gt_dispnum7(_eeprom.filling_num_accum, 500 + 800, 330);         //入力値初期表示(0)
 
@@ -242,6 +269,7 @@ void gt_page02(){
             //gt_setCursor(300, 420);
             //Serial2.print("fix");
         }
+
         
         //文字表示
         //低速のみ供給設定表示
@@ -255,8 +283,8 @@ void gt_page02(){
 
         //分解の表示
         gt_setCursor(X_PAGE2_SW5, Y_PAGE2_SW5-10);
-        if(low_reso_flag == false){
-            Serial2.print("    1");
+        if(low_reso_flag == true){
+            Serial2.print("1.0");
         }else{
             Serial2.print("0.1");
         }
@@ -285,10 +313,15 @@ void gt_page02(){
         incomingByte3 = Serial2.read();  //スイッチ番号
 
         if (incomingByte2 == 0x31) {
+            if(lock_flag == false){
             switch (incomingByte3) {
                 case 1:
                     _eeprom.calib_flag = false; 
                     _eeprom.prestop_offset1 = gt_keyanddisp5(X_PAGE2_SW1, Y_PAGE2_SW1);
+                    if(_eeprom.prestop_offset1 >= _eeprom.filling_vol_goal){
+                        _eeprom.prestop_offset1 = _eeprom.filling_vol_goal;
+                        lp_only_flag = true;
+                    }
                     EEPROM.put(0x00,_eeprom);
                     _eeprom.calib_flag = true; 
                     pgch_flag = true;
@@ -297,6 +330,9 @@ void gt_page02(){
                 case 2:
                     _eeprom.calib_flag = false; 
                     _eeprom.prestop_offset2   = gt_keyanddisp5(X_PAGE2_SW2, Y_PAGE2_SW2);
+                    if(_eeprom.prestop_offset2 >= _eeprom.prestop_offset1){
+                        _eeprom.prestop_offset2 = _eeprom.prestop_offset1;
+                    }
                     EEPROM.put(0x00,_eeprom);
                     _eeprom.calib_flag = true; 
                     pgch_flag = true;
@@ -339,21 +375,24 @@ void gt_page02(){
                     pulsecount_flag = false;
                     break;
                 case 7://LOCK(元fix表示)                                         //L_CUSTOM_SW;
-                    /*_eeprom.calib_flag = true;                                //補正値確定
-                    EEPROM.put(0x00,_eeprom);
-                    pgch_flag = true;*/
-                    if( (gt_keyanddisp5(0, 430) == 1111)  && (_eeprom.calib_flag == true) ){
-                    filling_num_now = _eeprom.filling_num_goal;
-                    pageNum = 6;                                //page06 連続充填に移動
-                    }
+                    lock_unlock();
                     pgch_flag = true;
-                    //pulsecount_flag = true;
+                    pulsecount_flag = true;
                     break;
                 case 8://MENU                                         //MENU_SW
                     pageNum = 1;                                //page01に移動
                     pgch_flag = true;
                     pulsecount_flag = false;
                     break;
+            }
+            }else{
+                switch (incomingByte3) {
+                case 7://LOCK(元fix表示)                                         //L_CUSTOM_SW;
+                    lock_unlock();
+                    pgch_flag = true;
+                    pulsecount_flag = true;
+                    break;
+                }
             }
             gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
         }
@@ -381,14 +420,12 @@ void start_fill(){
 }
 
 //充填モード****************************************************************************************
-void gt_page03(){
+void gt_page13(){
     if(pgch_flag == true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 5);              //ch=0,sn=5
-    gt_CustomSwitch( X_PAGE3_SW1, Y_PAGE3_SW1, DISP_NUM_W5, DISP_NUM_H5);    //SW1(充填目標値)
-    gt_CustomSwitch( X_PAGE3_SW2, Y_PAGE3_SW2, DISP_NUM_W5, DISP_NUM_H5);    //SW2(充填回数)
-    R_CUSTOM_SW;                            //page03
-    L_CUSTOM_SW;                            //page06
+    gt_CustomSwitchMode(0, 3);              //ch=0,sn=5
+    gt_CustomSwitch( 80, 230, 280, 130);    //SW1(充填目標値)
+    gt_CustomSwitch(450, 230, 280, 130);    //SW2(充填回数)
     MENU_SW;                                //menu
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
@@ -397,12 +434,14 @@ void gt_page03(){
     //初期画面(非表示エリアに表示してから表示エリアにコピーする)
     //背景描画
     gt_setCursor(800, 0);
-    gt_CopyFrom(IMAGE_ADDR_PAGE3, 800, 800, 480, 0x91);
+        if(digitalRead(SOLV_PIN_OPEN) == LOW){
+        gt_CopyFrom(IMAGE_ADDR_PAGE13A, 800, 800, 480, 0x91);
+    }else{
+        gt_CopyFrom(IMAGE_ADDR_PAGE13, 800, 800, 480, 0x91);
+    }
 
     //数値表示
     gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(_eeprom.filling_vol_goal, 70 + 800, Y_PAGE3_SW1 +5);          //入力値初期表示(0)
-    gt_dispnum5(_eeprom.filling_num_goal, 70 + 800, Y_PAGE3_SW2 +5);         //入力値初期表示(0)
 
     //非表示エリアから表示エリアにコピー
     gt_setCursor(0, 0);
@@ -413,7 +452,6 @@ void gt_page03(){
 
     //受信バッファが3になったらデータ読込
     if(Serial2.available() < 3) {
-        start_fill();
 
     }else{
 
@@ -430,30 +468,17 @@ void gt_page03(){
     if (incomingByte2 == 0x31) {
         switch (incomingByte3) {
             case 1:
-                _eeprom.filling_vol_goal = gt_keyanddisp5(X_PAGE3_SW1, Y_PAGE3_SW1);
-                SD_logging_settingdata(_eeprom.filling_vol_goal);
-                EEPROM.put(0x00,_eeprom);
+                digitalWrite(SOLV_PIN_OPEN,HIGH);
                 pgch_flag = true;
                 break;
             case 2:
-                _eeprom.filling_num_goal   = gt_keyanddisp5(X_PAGE3_SW2, Y_PAGE3_SW2);
-                EEPROM.put(0x00,_eeprom);
+                digitalWrite(SOLV_PIN_OPEN,LOW);
                 pgch_flag = true;
                 break;
-            case 3:                                         //R_CUSTOM_SW;
-                pageNum = 2;                                //page02に移動
+            case 3:                                         //MENU_SW;
+                pageNum = 1;                                //MENUに移動
                 pgch_flag = true;
-                break;
-            case 4:                                         //L_CUSTOM_SW;
-                if( (gt_keyanddisp5(0, 430) == 1111)  && (_eeprom.calib_flag == true) ){
-                    filling_num_now = _eeprom.filling_num_goal;
-                    pageNum = 6;                                //page06 連続充填に移動
-                }
-                    pgch_flag = true;
-                break;
-            case 5:                                         //MENU_SW
-                pageNum = 1;                                //page01に移動
-                pgch_flag = true;
+                digitalWrite(SOLV_PIN_OPEN,LOW);
                 break;
         }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
@@ -478,13 +503,15 @@ void washing_start(){
 void gt_page04(){
     if(pgch_flag == true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 6);              //ch=0,sn=6
+    gt_CustomSwitchMode(0, 8);              //ch=0,sn=8
     gt_CustomSwitch( X_PAGE4_SW1, Y_PAGE4_SW1, DISP_NUM_W5, DISP_NUM_H5);    //SW1(洗浄量)
     gt_CustomSwitch( X_PAGE4_SW2, Y_PAGE4_SW2, DISP_NUM_W5, DISP_NUM_H5);    //SW2(洗浄回数)
     gt_CustomSwitch( X_PAGE4_SW3, Y_PAGE4_SW3, DISP_NUM_W5, DISP_NUM_H5);    //SW3(洗浄間隔)
     R_CUSTOM_SW;                            //洗浄累積リセット
     L_CUSTOM_SW;                            //start washing
     MENU_SW;                                //menu
+    M_CUSTOM_SW;
+    LOCK_SW;
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
     gt_TouchDataTransmit(1);                //タッチパネル制御データ送信許可
@@ -492,7 +519,11 @@ void gt_page04(){
     //初期画面(非表示エリアに表示してから表示エリアにコピーする)
     //背景描画
     gt_setCursor(800, 0);
-    gt_CopyFrom(IMAGE_ADDR_PAGE4, 800, 800, 480, 0x91);
+    if(lock_flag == true){
+        gt_CopyFrom(IMAGE_ADDR_PAGE4A, 800, 800, 480, 0x91);
+    }else{
+        gt_CopyFrom(IMAGE_ADDR_PAGE4, 800, 800, 480, 0x91);
+    }
 
     //数値表示
     gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
@@ -525,6 +556,7 @@ void gt_page04(){
     incomingByte3 = Serial2.read();  //スイッチ番号
 
     if (incomingByte2 == 0x31) {
+        if(lock_flag == false){
         switch (incomingByte3) {
             case 1:
                 _eeprom.washing_vol_goal = gt_keyanddisp5(X_PAGE4_SW1, Y_PAGE4_SW1);
@@ -563,6 +595,26 @@ void gt_page04(){
                 wash_val_close();
                 pgch_flag = true;
                 break;
+            case 7:                                         //MENU_SW
+                pageNum = 1;                                //page01に移動
+                wash_val_close();
+                pgch_flag = true;
+                break;
+            case 8:                                         //LOCK_SW
+                lock_unlock();
+                pgch_flag = true;
+                wash_val_close();
+                break;
+        }
+        }else{
+            switch (incomingByte3) {
+                case 8:                                         //LOCK_SW
+                lock_unlock();
+                gt_OutlineFontSize(10, 0, 0, 0); 
+                pgch_flag = true;
+                wash_val_close();
+                break;
+            }
         }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
     }
@@ -646,11 +698,11 @@ void gt_page05(){
 void gt_page06(){
     if(pulsecount_flag == true){
     //数値表示
-    gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(filling_vol_now, 70 + 800, Y_PAGE6_SW2 +5);         //入力値初期表示(0)
+    gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
+    gt_dispnum5(filling_vol_now, 70 + 800, 270 +5);         //入力値初期表示(0)
 
 //    gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-//    gt_dispnum5(filling_num_now, 550 + 800, 90);          //入力値初期表示(0)
+    gt_dispnum5(filling_num_now, 550 + 800, 70);          //入力値初期表示(0)
     
     //非表示エリアから表示エリアにコピー
     gt_setCursor(0, 0);
@@ -658,8 +710,12 @@ void gt_page06(){
 
     }else if(true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 1);              //ch=0,sn=5
+    gt_CustomSwitchMode(0, 5);              //ch=0,sn=5
     MENU_SW;                                //menu
+    gt_CustomSwitch( X_PAGE6_SW1, Y_PAGE6_SW1, DISP_NUM_W5, DISP_NUM_H5);    //SW1(充填目標値)
+    gt_CustomSwitch( X_PAGE6_SW2, Y_PAGE6_SW2, DISP_NUM_W5, DISP_NUM_H5);    //SW2(充填回数)
+    R_CUSTOM_SW;                            //累積リセット
+    LOCK_SW;                                //LOCK
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
     gt_TouchDataTransmit(1);                //タッチパネル制御データ送信許可
@@ -667,17 +723,24 @@ void gt_page06(){
     //初期画面(非表示エリアに表示してから表示エリアにコピーする)
     //背景描画
     gt_setCursor(800, 0);
-    gt_CopyFrom(IMAGE_ADDR_PAGE6, 800, 800, 480, 0x91);
+    if(lock_flag == true){
+        gt_CopyFrom(IMAGE_ADDR_PAGE6A, 800, 800, 480, 0x91);
+    }else{
+        gt_CopyFrom(IMAGE_ADDR_PAGE6, 800, 800, 480, 0x91);
+    }
 
     //数値表示
-    gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(_eeprom.filling_vol_goal, 70 + 800, Y_PAGE6_SW1 +5);          //入力値初期表示(0)
-    gt_dispnum5(filling_vol_now, 70 + 800, Y_PAGE6_SW2 +5);         //入力値初期表示(0)
+    gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
+    gt_dispdecimal(_eeprom.filling_vol_goal, 70 + 800, Y_PAGE6_SW1 +5);          //入力値初期表示(0)
+    gt_dispdecimal(filling_vol_now, 70 + 800,270 +5);         //入力値初期表示(0)
 
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(filling_num_now, 550 + 800, 90);          //入力値初期表示(0)
+    gt_dispnum5(filling_num_now, 550 + 800, 70);          //入力値初期表示(0)
     gt_dispnum7(_eeprom.filling_vol_accum, 510 + 800, 210);         //入力値初期表示(0)
     gt_dispnum7(_eeprom.filling_num_accum, 510 + 800, 330);         //入力値初期表示(0)
+
+    gt_OutlineFontSize(30, 0, 0, 0);               //アウトラインフォントサイズ指定
+    gt_dispnum5(_eeprom.filling_num_goal, 650 + 800, 155);         //入力値初期表示(0)
     
     //非表示エリアから表示エリアにコピー
     gt_setCursor(0, 0);
@@ -695,14 +758,51 @@ void gt_page06(){
     incomingByte3 = Serial2.read();  //スイッチ番号
 
     if (incomingByte2 == 0x31) {
+        if(lock_flag == false){
         switch (incomingByte3) {
             case 1:                                         //MENU_SW
                 pageNum = 1;                                //page01に移動
                 pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            case 2:
+                _eeprom.filling_vol_goal = gt_keyanddisp5(X_PAGE6_SW1, Y_PAGE6_SW1);
+                SD_logging_settingdata(_eeprom.filling_vol_goal);
+                EEPROM.put(0x00,_eeprom);
+                pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            case 3:
+                filling_num_now = gt_keyanddisp5(X_PAGE6_SW2, Y_PAGE6_SW2);
+                _eeprom.filling_num_goal = filling_num_now;
+                EEPROM.put(0x00,_eeprom);
+                pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            case 4://累積リセット                                         //R_CUSTOM_SW;
+                _eeprom.filling_vol_accum = 0;
+                _eeprom.filling_num_accum = 0;
+                EEPROM.put(0x00,_eeprom);
+                pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            case 5://LOCK
+                lock_unlock();
+                pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            }
+        }else{
+            switch (incomingByte3) {
+            case 5:
+                lock_unlock();
+                pgch_flag = true;
+                pulsecount_flag = false;
                 break;
         }
+        }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
-    }
+        }
     }
 }
 
@@ -710,10 +810,11 @@ void gt_page06(){
 void gt_page07(){
     if(pgch_flag == true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 3);              //ch=0,sn=3
+    gt_CustomSwitchMode(0, 4);              //ch=0,sn=3
     R_CUSTOM_SW;                            //エラーリセット
     L_CUSTOM_SW;                            //累積リセット
     MENU_SW;                                //menu
+    LOCK_SW;                                //LOCK
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
     gt_TouchDataTransmit(1);                //タッチパネル制御データ送信許可
@@ -721,7 +822,12 @@ void gt_page07(){
     //初期画面(非表示エリアに表示してから表示エリアにコピーする)
     //背景描画
     gt_setCursor(800, 0);
-    gt_CopyFrom(IMAGE_ADDR_PAGE7, 800, 800, 480, 0x91);
+    gt_setCursor(800, 0);
+    if(lock_flag == true){
+        gt_CopyFrom(IMAGE_ADDR_PAGE7A, 800, 800, 480, 0x91);
+    }else{
+        gt_CopyFrom(IMAGE_ADDR_PAGE7, 800, 800, 480, 0x91);
+    }
 
     //数値表示
     gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
@@ -762,6 +868,7 @@ void gt_page07(){
     incomingByte3 = Serial2.read();  //スイッチ番号
 
       if (incomingByte2 == 0x31) {
+          if(lock_flag == false){
         switch (incomingByte3) {
             case 1:                                         //R_CUSTOM_SW;
                 error_flag = false;                                //エラーリセット
@@ -785,6 +892,18 @@ void gt_page07(){
                 pageNum = 1;                                //page01に移動
                 pgch_flag = true;
                 break;
+            case 4:
+                lock_unlock();
+                pgch_flag = true;
+                break;
+        }
+        }else{
+            switch (incomingByte3) {
+            case 4:
+                lock_unlock();
+                pgch_flag = true;
+                break;
+        }
         }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
       }
@@ -818,8 +937,8 @@ uint32_t gt_keyanddisp5(int sw_x, int sw_y){
     uint32_t inputdata = disp_keypad(540, 80);        //キーパッド表示→入力値取得
     gt_CharacterColor(255, 255, 255);           //キャラクタ表示色指定(白)
     gt_BoxDrawing(1, 1, sw_x, sw_y, DISP_NUM_W5, DISP_NUM_H5);      //キー入力表示枠
-    gt_OutlineFontSize(100, 0, 0, 0);           //アウトラインフォントサイズ指定
-    gt_dispnum5(inputdata, 70, sw_y +5);            //入力値1表示
+//    gt_OutlineFontSize(100, 0, 0, 0);           //アウトラインフォントサイズ指定
+//    gt_dispnum5(inputdata, 70, sw_y +5);            //入力値1表示
     return inputdata;
 }
 

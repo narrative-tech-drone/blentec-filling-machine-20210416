@@ -101,7 +101,7 @@
 //変数
 //volatile uint16_t filling_vol_goal;        //充填目標値
 //volatile uint16_t filling_num_goal;        //充填目標回数
-volatile uint16_t filling_vol_now;        //充填目標値 現在
+volatile uint32_t filling_vol_now;        //充填目標値 現在
 volatile uint16_t filling_num_now;        //充填目標値 現在
 volatile uint16_t washing_vol_now;        //充填目標値 現在
 volatile uint16_t washing_num_now;        //充填目標値 現在
@@ -135,7 +135,8 @@ volatile bool     lowpressure_flag = false;
 volatile bool     washing_flag = false;
 volatile bool     washing_continue_flag = false;
 volatile bool     lp_only_flag = false;
-volatile bool     low_reso_flag = false;
+volatile bool     low_reso_flag = true; //trueで分解能1ml
+volatile bool     lock_flag = false;
 
 
 /* Exported constants --------------------------------------------------------*/

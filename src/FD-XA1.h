@@ -158,8 +158,12 @@ void vol_cal_ad(){
 void vol_cal_pulse(){
 
   uint16_t vol;   //流量一時値
-
-  vol = 5 * (pulseP - pulseN);
+  if(low_reso_flag == true){
+    vol = 5 * (pulseP - pulseN);
+  }else{
+    vol = (pulseP - pulseN)/2;
+  }
+  
 
   //バルブを操作していないとき（充填していないとき）は現在値を計算するだけ
   if(pulsecount_flag == false){
@@ -183,7 +187,7 @@ void vol_cal_pulse(){
     //Serial.println(vol);
     FlexiTimer2::stop();
     Serial.println(vol);
-    _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now;
+    _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now /10;
     SD_logging_data(filling_vol_now);
     _eeprom.filling_num_accum ++;
     EEPROM.put(0x00,_eeprom);
@@ -308,6 +312,5 @@ void Npulse() {
 
 void setupFD(){
   attachInterrupt(digitalPinToInterrupt(XA_OUT1), Ppulse, CHANGE);
-  //attachInterrupt(digitalPinToInterrupt(XA_OUT1), Ppulse_test, CHANGE);
   attachInterrupt(digitalPinToInterrupt(XA_OUT2), Npulse, CHANGE);
 }

@@ -232,8 +232,8 @@ void loop() {
   }
 
   //kito 2021.04.17 動作関数変更
-  vol_cal_mix();
-  //vol_cal_pulse();
+  //vol_cal_mix();
+  vol_cal_pulse();
 
   if(pulse_stop_flag == true){
     setupFD();

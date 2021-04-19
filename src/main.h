@@ -104,7 +104,7 @@
 volatile uint32_t filling_vol_now;        //充填目標値 現在
 volatile uint16_t filling_num_now;        //充填目標値 現在
 volatile uint16_t washing_vol_now;        //充填目標値 現在
-volatile uint16_t washing_num_now;        //充填目標値 現在
+//volatile uint16_t washing_num_now;        //充填目標値 現在
 //volatile uint16_t calib_num_goal;           //キャリブレーション回数
 //volatile uint32_t filling_vol_accum;        //累積充填量
 //volatile uint32_t filling_num_accum;        //累積充填回数
@@ -137,6 +137,8 @@ volatile bool     washing_continue_flag = false;
 volatile bool     lp_only_flag = false;
 volatile bool     low_reso_flag = true; //trueで分解能1ml
 volatile bool     lock_flag = false;
+
+volatile uint16_t washing_num_now;
 
 
 /* Exported constants --------------------------------------------------------*/

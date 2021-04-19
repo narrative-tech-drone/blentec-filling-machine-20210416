@@ -107,6 +107,8 @@ volatile uint16_t disp_update_flag = 0;
 volatile uint32_t rtc_update_flag = 0;
 
 
+
+
 void RTCtimer();
 
 
@@ -197,6 +199,7 @@ void setup() {
   gtUartSetup();
   setupFD();
   EEPROM.get(0x00,_eeprom);
+  washing_num_now = _eeprom.washing_num_goal;
   if(analogRead(FD_ANALOG) <= SENSOR_CHK){
     //error_sensor = true;
   }
@@ -240,9 +243,9 @@ void loop() {
   }
   vol_cal_wash();
   if(washing_continue_flag == true){
-    _eeprom.washing_num_goal --;
+    washing_num_now --;
     washing_continue_flag = false;
-    if(_eeprom.washing_num_goal > 0){
+    if(washing_num_now > 0){
       for(int i=1; i <= _eeprom.washing_time_interval ; i++){
         delay(1000);
       }

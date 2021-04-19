@@ -528,12 +528,15 @@ void gt_page04(){
     //数値表示
     gt_OutlineFontSize(100, 0, 0, 0);               //アウトラインフォントサイズ指定
     gt_dispnum5(_eeprom.washing_vol_goal, 70 + 800, Y_PAGE4_SW1 +5);          //入力値初期表示(0)
-    gt_dispnum5(_eeprom.washing_num_goal, 70 + 800, Y_PAGE4_SW2 +5);         //入力値初期表示(0)
 
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(_eeprom.washing_time_interval, 550 + 800, Y_PAGE4_SW3 +5);          //入力値初期表示(0)
-    gt_dispnum5(_eeprom.washing_num_accum, 550 + 800, 210);         //入力値初期表示(0)
-    gt_dispnum5(_eeprom.washing_vol_accum, 550 + 800, 330);         //入力値初期表示(0)
+    gt_dispnum5(_eeprom.washing_time_interval, 550 + 800, Y_PAGE4_SW3 -10);          //入力値初期表示(0)
+    gt_dispnum5(washing_num_now, 100 + 800, Y_PAGE4_SW2 -10);         //入力値初期表示(0)
+    gt_dispnum7(_eeprom.washing_num_accum, 500 + 800, 200);         //入力値初期表示(0)
+    gt_dispnum7(_eeprom.washing_vol_accum, 500 + 800, 320);         //入力値初期表示(0)
+
+    gt_OutlineFontSize(30, 0, 0, 0);
+    gt_dispnum5(_eeprom.washing_num_goal, 230 + 800, Y_PAGE4_SW2 +75);         //入力値初期表示(0)
 
     //非表示エリアから表示エリアにコピー
     gt_setCursor(0, 0);
@@ -566,6 +569,7 @@ void gt_page04(){
                 break;
             case 2:
                 _eeprom.washing_num_goal   = gt_keyanddisp5(X_PAGE4_SW2, Y_PAGE4_SW2);
+                washing_num_now = _eeprom.washing_num_goal;
                 EEPROM.put(0x00,_eeprom);
                 wash_val_close();
                 pgch_flag = true;
@@ -593,16 +597,18 @@ void gt_page04(){
             case 6:                                         //MENU_SW
                 pageNum = 1;                                //page01に移動
                 wash_val_close();
+                washing_flag = false;
                 pgch_flag = true;
                 break;
-            case 7:                                         //MENU_SW
-                pageNum = 1;                                //page01に移動
+            case 7:                                         //STOP
                 wash_val_close();
                 pgch_flag = true;
+                washing_flag = false;
                 break;
             case 8:                                         //LOCK_SW
                 lock_unlock();
                 pgch_flag = true;
+                washing_flag = false;
                 wash_val_close();
                 break;
         }
@@ -612,6 +618,7 @@ void gt_page04(){
                 lock_unlock();
                 gt_OutlineFontSize(10, 0, 0, 0); 
                 pgch_flag = true;
+                washing_flag = false;
                 wash_val_close();
                 break;
             }

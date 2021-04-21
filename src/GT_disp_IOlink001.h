@@ -213,9 +213,36 @@ void gt_page01(){
     }
 }
 
+void start_fill(){
+    if((digitalRead(FOOT_SW_PIN) == LOW) && (pulsecount_flag == false)){
+            digitalWrite(FD_INPUT2,HIGH);
+            delay(20);
+            valve_open_Hp();
+            if((pageNum == 6) || (pageNum == 3)){
+                if(filling_num_now > 0){
+                    filling_num_now--;
+                }
+            }
+            //FlexiTimer2::start();
+            pulseP    = 0;
+            pulseN    = 0;
+            ad_vol = 0;
+            pulsecount_flag = true;
+
+            ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
+            
+            digitalWrite(FD_INPUT2,LOW);
+    }
+}
 
 //キャリブレーションモード****************************************************************************************
 void gt_page02(){
+    if(pulsecount_flag == true){
+     //入力値初期表示(0)
+        gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
+        gt_dispdecimal(filling_vol_now, X_PAGE2_SW2 + 30, (Y_PAGE2_SW2 + 130) +5); 
+    }
+
     if(pgch_flag == true){
         //タッチパネル制御モード定義(カスタムスイッチモード)
         gt_CustomSwitchMode(0, 8);              //ch=0,sn=5
@@ -294,6 +321,8 @@ void gt_page02(){
 
     //受信バッファが3になったらデータ読込
     if(Serial2.available() < 3) {
+        start_fill();
+        /*
         if((digitalRead(FOOT_SW_PIN) == LOW) && (pulsecount_flag == false)){
             digitalWrite(FD_INPUT2,HIGH);
             delay(20);
@@ -307,6 +336,7 @@ void gt_page02(){
             digitalWrite(FD_INPUT2,LOW);
             pgch_flag = true;
         }
+        */
     }else{
         incomingByte1 = Serial2.read();  //ヘッダ(=10h)
         incomingByte2 = Serial2.read();  //識別子(=30h:リリース/31h:タッチ)
@@ -399,25 +429,7 @@ void gt_page02(){
     }
 }
 
-void start_fill(){
-    if((digitalRead(FOOT_SW_PIN) == LOW) && (pulsecount_flag == false)){
-            digitalWrite(FD_INPUT2,HIGH);
-            delay(20);
-            valve_open_Hp();
-            if(filling_num_now > 0){
-                filling_num_now--;
-            }
-            FlexiTimer2::start();
-            pulseP    = 0;
-            pulseN    = 0;
-            ad_vol = 0;
-            pulsecount_flag = true;
 
-            ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
-            
-            digitalWrite(FD_INPUT2,LOW);
-    }
-}
 
 //充填モード****************************************************************************************
 void gt_page13(){
@@ -490,13 +502,21 @@ void washing_start(){
     digitalWrite(FD_INPUT2,HIGH);
     delay(20);
     valve_open_Hp();
-    FlexiTimer2::start();
+//    FlexiTimer2::start();
     pulseP    = 0;
     pulseN    = 0;
-    ad_vol = 0;
+//    ad_vol = 0;
     washing_flag = true;
-    ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
+//    ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
+    pulsecount_flag = true;
     digitalWrite(FD_INPUT2,LOW);
+}
+
+void washing_stop(){
+    wash_val_close();
+    washing_flag = false;
+    pulsecount_flag = false;
+    pgch_flag = true;
 }
 
 //洗浄モード****************************************************************************************
@@ -564,28 +584,24 @@ void gt_page04(){
             case 1:
                 _eeprom.washing_vol_goal = gt_keyanddisp5(X_PAGE4_SW1, Y_PAGE4_SW1);
                 EEPROM.put(0x00,_eeprom);
-                wash_val_close();
-                pgch_flag = true;
+                washing_stop();
                 break;
             case 2:
                 _eeprom.washing_num_goal   = gt_keyanddisp5(X_PAGE4_SW2, Y_PAGE4_SW2);
                 washing_num_now = _eeprom.washing_num_goal;
                 EEPROM.put(0x00,_eeprom);
-                wash_val_close();
-                pgch_flag = true;
+                washing_stop();
                 break;
             case 3:
                 _eeprom.washing_time_interval   = gt_keyanddisp5(X_PAGE4_SW3, Y_PAGE4_SW3);
                 EEPROM.put(0x00,_eeprom);
-                wash_val_close();
-                pgch_flag = true;
+                washing_stop();
                 break;
             case 4:
                 _eeprom.washing_num_accum = 0;    //洗浄累積リセット
                 _eeprom.washing_vol_accum = 0;
                 EEPROM.put(0x00,_eeprom);
-                wash_val_close();
-                pgch_flag = true;
+                washing_stop();
                 break;
             case 5:                                         //洗浄開始
                 if( (_eeprom.washing_num_goal > 0)  && (pulsecount_flag == false)){
@@ -596,20 +612,14 @@ void gt_page04(){
                 break;
             case 6:                                         //MENU_SW
                 pageNum = 1;                                //page01に移動
-                wash_val_close();
-                washing_flag = false;
-                pgch_flag = true;
+                washing_stop();
                 break;
             case 7:                                         //STOP
-                wash_val_close();
-                pgch_flag = true;
-                washing_flag = false;
+                washing_stop();
                 break;
             case 8:                                         //LOCK_SW
                 lock_unlock();
-                pgch_flag = true;
-                washing_flag = false;
-                wash_val_close();
+                washing_stop();
                 break;
         }
         }else{
@@ -619,6 +629,7 @@ void gt_page04(){
                 gt_OutlineFontSize(10, 0, 0, 0); 
                 pgch_flag = true;
                 washing_flag = false;
+                pulsecount_flag = true;
                 wash_val_close();
                 break;
             }
@@ -665,8 +676,8 @@ void gt_page05(){
     }
 
     //受信バッファが3になったらデータ読込
-    if (Serial2.available() < 3) {
-
+    if(Serial2.available() < 3) {
+        start_fill();
     }else{
       incomingByte1 = Serial2.read();  //ヘッダ(=10h)
       incomingByte2 = Serial2.read();  //識別子(=30h:リリース/31h:タッチ)
@@ -706,14 +717,13 @@ void gt_page06(){
     if(pulsecount_flag == true){
     //数値表示
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(filling_vol_now, 70 + 800, 270 +5);         //入力値初期表示(0)
-
-//    gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
-    gt_dispnum5(filling_num_now, 550 + 800, 70);          //入力値初期表示(0)
+    gt_dispdecimal(filling_vol_now, 70 , 270 +5);         //入力値初期表示(0)
+    gt_dispnum5(filling_num_now, 550 , 70);          //入力値初期表示(0)
+    //gt_dispnum7(_eeprom.filling_vol_accum, 510 , 210);         //入力値初期表示(0)
     
     //非表示エリアから表示エリアにコピー
-    gt_setCursor(0, 0);
-    gt_CopyVram(800, 0, 800, 480, 1600);            //定義済みビットイメージ表示(VRAMからコピー)
+    //gt_setCursor(0, 0);
+    //gt_CopyVram(800, 0, 800, 480, 1600);            //定義済みビットイメージ表示(VRAMからコピー)
 
     }else if(true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
@@ -737,18 +747,22 @@ void gt_page06(){
     }
 
     //数値表示
+    
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
     gt_dispdecimal(_eeprom.filling_vol_goal, 70 + 800, Y_PAGE6_SW1 +5);          //入力値初期表示(0)
+    gt_OutlineFontSize(80, 0, 0, 0);  
     gt_dispdecimal(filling_vol_now, 70 + 800,270 +5);         //入力値初期表示(0)
-
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
     gt_dispnum5(filling_num_now, 550 + 800, 70);          //入力値初期表示(0)
+    gt_OutlineFontSize(80, 0, 0, 0);  
     gt_dispnum7(_eeprom.filling_vol_accum, 510 + 800, 210);         //入力値初期表示(0)
+    gt_OutlineFontSize(80, 0, 0, 0);  
     gt_dispnum7(_eeprom.filling_num_accum, 510 + 800, 330);         //入力値初期表示(0)
 
     gt_OutlineFontSize(30, 0, 0, 0);               //アウトラインフォントサイズ指定
     gt_dispnum5(_eeprom.filling_num_goal, 650 + 800, 155);         //入力値初期表示(0)
     
+
     //非表示エリアから表示エリアにコピー
     gt_setCursor(0, 0);
     gt_CopyVram(800, 0, 800, 480, 1600);            //定義済みビットイメージ表示(VRAMからコピー)
@@ -884,9 +898,9 @@ void gt_page07(){
                     SD_initialize();
                 }
                 error_sensor =false;
-                if(analogRead(FD_ANALOG) <= 150){
-                    error_sensor = true;
-                }
+                //if(analogRead(FD_ANALOG) <= 150){
+                //    error_sensor = true;
+                //}
                 pgch_flag = true;
                 break;
             case 2:                                         //L_CUSTOM_SW;

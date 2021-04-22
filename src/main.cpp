@@ -212,12 +212,16 @@ void loop() {
   if(disp_update_flag <= 1000){
     disp_update_flag ++;
   }else{
+//    if(digitalRead(EMG_ON == LOW)){
+//      Serial.print("HIGH");
+//    }
+if(digitalRead(XA_OUT2) == HIGH ){
+      error_sensor = true;
+    }
     if( (error_sd == true) || (error_sensor == true)  ){
       error_flag = true;
     }
-//    if(analogRead(FD_ANALOG) <= 70){
-//      error_sensor = true;
-//    }
+    
     gt_dispselect();
     disp_update_flag = 0;
 //    Serial.println(ad_vol);
@@ -243,9 +247,9 @@ void loop() {
   }
   vol_cal_wash_new();
   if(washing_continue_flag == true){
-    washing_num_now --;
     washing_continue_flag = false;
     if(washing_num_now > 0){
+      //washing_num_now --;
       for(int i=1; i <= _eeprom.washing_time_interval ; i++){
         delay(1000);
       }

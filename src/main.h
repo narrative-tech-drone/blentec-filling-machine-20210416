@@ -50,12 +50,7 @@
 #define SOLV_PIN_OPEN   A2
 #define SOLV_PIN_CLOSE   A1
 
-//#define IOLINK_WUEN   A3
-//#define IOLINK_LI     A4
 #define IOLINK_TXQ    8
-//#define IOLINK_IRQ    4
-//#define IOLINK_UV     5
-//#define IOLINK_TXEN   4
 #define IOLINK_TXC    18
 #define IOLINK_RX     19
 
@@ -66,16 +61,6 @@
 #define XA_OUT2       2
 
 #define EMG_ON        14        
-
-
-
-/*
-#define AD_CALIB      995 //
-#define SENSOR_CHK    1
-#define AD_THRESHOLD  414
-*/
-
-
 
 #define AD_CALIB      1970 //2号機　抵抗　Ω
 //20.00L/min 159-162

@@ -59,6 +59,7 @@
 uint32_t gt_keyanddisp5(int sw_x, int sw_y);
 void gt_dispnumbox7(uint32_t inputdata , int sw_x, int sw_y);
 void gt_dispselect();
+void stop_filling();
 void gt_clockdisp(int sw_x, int sw_y);
 void gt_page00();
 void gt_page01();
@@ -85,7 +86,7 @@ void lock_unlock(){
 }
 
 void gt_dispselect(){
-    if(digitalRead(EMG_ON) == HIGH){
+    if(digitalRead(EMG_ON) == LOW){
         pageNum = 8;
         emg_on_state = true;
     }else{
@@ -147,9 +148,9 @@ void gt_page01(){
     gt_setCursor(800, 0);
     if(_eeprom.calib_flag == false){
         if(error_flag == true){
-            gt_CopyFrom(IMAGE_ADDR_PAGE1_3, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_4, 800, 800, 480, 0x91);
         }else{
-            gt_CopyFrom(IMAGE_ADDR_PAGE1_1, 800, 800, 480, 0x91);
+            gt_CopyFrom(IMAGE_ADDR_PAGE1_2, 800, 800, 480, 0x91);
         }
     }else{
         if(error_flag == true){
@@ -229,7 +230,7 @@ void start_fill(){
             ad_vol = 0;
             pulsecount_flag = true;
 
-            ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
+            //ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
             
             digitalWrite(FD_INPUT2,LOW);
     }
@@ -397,9 +398,9 @@ void gt_page02(){
                     pulsecount_flag = false;
                     break;
                 case 6://累積リセット                                         //R_CUSTOM_SW;
-                    _eeprom.calib_flag = false;                                //補正値リセット
-                    _eeprom.prestop_offset1  = 0;
-                    _eeprom.prestop_offset2  = 0;
+                    _eeprom.calib_flag = false;                                //累積リセット  
+                    _eeprom.filling_vol_accum = 0;
+                    _eeprom.filling_num_accum = 0;
                     EEPROM.put(0x00,_eeprom);
                     pgch_flag = true;
                     pulsecount_flag = false;
@@ -411,6 +412,9 @@ void gt_page02(){
                     break;
                 case 8://MENU                                         //MENU_SW
                     pageNum = 1;                                //page01に移動
+                    digitalWrite(SOLV_PIN_PRESSURE, LOW);
+                    digitalWrite(SOLV_PIN_OPEN, LOW);
+                    digitalWrite(SOLV_PIN_CLOSE, LOW);
                     pgch_flag = true;
                     pulsecount_flag = false;
                     break;
@@ -499,6 +503,11 @@ void gt_page13(){
 }
 
 void washing_start(){
+    if(washing_num_now > 0){
+        washing_num_now--;
+    }else{
+        return;
+    }
     digitalWrite(FD_INPUT2,HIGH);
     delay(20);
     valve_open_Hp();
@@ -510,6 +519,7 @@ void washing_start(){
 //    ad_vol_flag = true;  //パルス　アナログミックス時のみ使用
     pulsecount_flag = true;
     digitalWrite(FD_INPUT2,LOW);
+    pgch_flag = true;
 }
 
 void washing_stop(){
@@ -569,7 +579,6 @@ void gt_page04(){
     if(Serial2.available() < 3) {
         if((digitalRead(FOOT_SW_PIN) == LOW) && (pulsecount_flag == false)){
             if(_eeprom.washing_num_goal > 0){
-                //_eeprom.washing_num_goal--;
                 washing_start();
             }
         }
@@ -714,7 +723,8 @@ void gt_page05(){
 
 //充填モード　連続*****************************************************************
 void gt_page06(){
-    if(pulsecount_flag == true){
+//    if(pulsecount_flag == true){
+    if(false){
     //数値表示
     gt_OutlineFontSize(80, 0, 0, 0);               //アウトラインフォントサイズ指定
     gt_dispdecimal(filling_vol_now, 70 , 270 +5);         //入力値初期表示(0)
@@ -740,10 +750,12 @@ void gt_page06(){
     //初期画面(非表示エリアに表示してから表示エリアにコピーする)
     //背景描画
     gt_setCursor(800, 0);
-    if(lock_flag == true){
-        gt_CopyFrom(IMAGE_ADDR_PAGE6A, 800, 800, 480, 0x91);
-    }else{
-        gt_CopyFrom(IMAGE_ADDR_PAGE6, 800, 800, 480, 0x91);
+    if(pgch_flag == true){
+        if(lock_flag == true){
+            gt_CopyFrom(IMAGE_ADDR_PAGE6A, 800, 800, 480, 0x91);
+        }else{
+            gt_CopyFrom(IMAGE_ADDR_PAGE6, 800, 800, 480, 0x91);
+        }
     }
 
     //数値表示
@@ -783,6 +795,9 @@ void gt_page06(){
         switch (incomingByte3) {
             case 1:                                         //MENU_SW
                 pageNum = 1;                                //page01に移動
+                digitalWrite(SOLV_PIN_PRESSURE, LOW);
+                digitalWrite(SOLV_PIN_OPEN, LOW);
+                digitalWrite(SOLV_PIN_CLOSE, LOW);
                 pgch_flag = true;
                 pulsecount_flag = false;
                 break;
@@ -898,9 +913,9 @@ void gt_page07(){
                     SD_initialize();
                 }
                 error_sensor =false;
-                //if(analogRead(FD_ANALOG) <= 150){
-                //    error_sensor = true;
-                //}
+                if(digitalRead(XA_OUT2) == HIGH ){
+                    error_sensor = true;
+                }
                 pgch_flag = true;
                 break;
             case 2:                                         //L_CUSTOM_SW;
@@ -946,7 +961,13 @@ void gt_page08(){
     gt_setCursor(0, 0);
     gt_CopyVram(800, 0, 800, 480, 1600);            //定義済みビットイメージ表示(VRAMからコピー)
 
-    while(digitalRead(EMG_ON) == HIGH){};
+    washing_flag = false;
+    pulsecount_flag = false;
+    digitalWrite(SOLV_PIN_PRESSURE, LOW);
+    digitalWrite(SOLV_PIN_OPEN, LOW);
+    digitalWrite(SOLV_PIN_CLOSE, LOW);
+    
+    while(digitalRead(EMG_ON) == LOW){};
     pageNum = 1;
     pgch_flag = true;
 }

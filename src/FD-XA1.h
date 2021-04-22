@@ -75,13 +75,12 @@ void vol_cal_wash()
 //calcurate washing volume
 void vol_cal_wash_new()
 {
-  if (washing_flag == false)
-  {
+  if (washing_flag == false){
     washing_vol_now = 5 * (pulseP - pulseN);
     return;
   }
 
-  uint16_t vol; //流量一時値
+  uint32_t vol; //流量一時値
   if (low_reso_flag == true){
     vol = 5 * (pulseP - pulseN);
   }
@@ -89,14 +88,14 @@ void vol_cal_wash_new()
     vol = (pulseP - pulseN) / 2;
   }
 
-  Serial.print(vol);
-
-  if (_eeprom.washing_vol_goal <= vol)
+  if ( _eeprom.washing_vol_goal <= (vol /10) )
   {
     wash_val_close();
-    _eeprom.washing_vol_accum = _eeprom.washing_vol_accum + vol;
+    _eeprom.washing_vol_accum = _eeprom.washing_vol_accum + vol/10;
     _eeprom.washing_num_accum++;
     EEPROM.put(0x00, _eeprom);
+    washing_flag = false;
+    pulsecount_flag = false;
     pgch_flag = true;
     washing_continue_flag = true;
   }
@@ -208,18 +207,22 @@ void vol_cal_ad()
 //calcurate filling volume
 void vol_cal_pulse()
 {
+  if(washing_flag == true){
+    return;
+  }
   uint16_t vol; //流量一時値
+  if (pulsecount_flag == false)
+  {
+    //filling_vol_now = vol;
+    return;
+  }
   if (low_reso_flag == true){
     vol = (pulseP - pulseN) * 5;
   }else{
     vol = (pulseP - pulseN) / 2;
   }
   //バルブを操作していないとき（充填していないとき）は現在値を計算するだけ
-  if (pulsecount_flag == false)
-  {
-    filling_vol_now = vol;
-    return;
-  }
+  
 
   if (lp_only_flag == true){
     //低圧の時
@@ -233,16 +236,23 @@ void vol_cal_pulse()
       digitalWrite(SOLV_PIN_PRESSURE, LOW);
       delay(350);
       lowpressure_flag = false;
+      if (low_reso_flag == true){
+        vol = (pulseP - pulseN) * 5;
+      }else{
+        vol = (pulseP - pulseN) / 2;
+      }
+      filling_vol_now = vol;
       //kito 追加
       FlexiTimer2::stop();
       Serial.println(vol);
       _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now / 10;
+      pulsecount_flag = false;
+      pulse_stop_flag = true;
       SD_logging_data(filling_vol_now);
       _eeprom.filling_num_accum++;
       EEPROM.put(0x00, _eeprom);
-      pulsecount_flag = false;
-      pulse_stop_flag = true;
-      delay(450);
+      
+      delay(250);
       pgch_flag = true;
       //kito ここまで
     } //高圧の時
@@ -276,7 +286,7 @@ void vol_cal_pulse()
       EEPROM.put(0x00, _eeprom);
       pulsecount_flag = false;
       pulse_stop_flag = true;
-      delay(450);
+      delay(250);
       pgch_flag = true;
       //kito ここまで
     } //高圧の時
@@ -394,6 +404,8 @@ void Ppulse()
   else if (washing_flag == true)
   {
     pulseP++;
+    Serial.print("W");
+    Serial.println(pulseP);
   }
 }
 
@@ -438,11 +450,11 @@ void Ppulse_test()
     test_pulse_flag = true;
     ad_vol_flag = true;
     ad_vol = 0;
-    FlexiTimer2::start();
+//    FlexiTimer2::start();
   }
   else
   {
-    FlexiTimer2::stop();
+//    FlexiTimer2::stop();
     test_pulse_flag = false;
     Serial.println(ad_vol);
   }
@@ -465,5 +477,5 @@ void Npulse()
 void setupFD()
 {
   attachInterrupt(digitalPinToInterrupt(XA_OUT1), Ppulse, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(XA_OUT2), Npulse, CHANGE);
+//  attachInterrupt(digitalPinToInterrupt(XA_OUT2), Npulse, CHANGE);
 }

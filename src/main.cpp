@@ -195,15 +195,16 @@ void setup() {
   SD_initialize();
   RTCsetup();
   RTCloop();
-  delay(200);
+  delay(500);
   gtUartSetup();
   setupFD();
   EEPROM.get(0x00,_eeprom);
   washing_num_now = _eeprom.washing_num_goal;
   filling_num_now = _eeprom.filling_num_goal;
-  if(analogRead(FD_ANALOG) <= SENSOR_CHK){
+  delay(1000);
+  //if(analogRead(FD_ANALOG) <= SENSOR_CHK){
     //error_sensor = true;
-  }
+  //}
   //Serial.print(analogRead(FD_ANALOG));
   //FlexiTimer2::set(1, timer_1ms); // call every 1ms "ticks"
 }
@@ -230,7 +231,7 @@ if(digitalRead(XA_OUT2) == HIGH ){
 
 //rtc clock update
   if(pageNum == 1){
-    if(rtc_update_flag <= 300000){
+    if(rtc_update_flag <= 90000){
       rtc_update_flag ++;
     }else{
       RTCloop();

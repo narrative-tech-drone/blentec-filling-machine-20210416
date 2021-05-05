@@ -139,7 +139,7 @@ void gtUartSetup()
     //最初にプログラム名を1秒間表示(識別用)
     gt_fontsize(4);                 //フォントサイズ8x16
     Serial2.print("Ver.1.0.2");
-    delay(1000);    gt_clr();
+    delay(2000);    gt_clr();
 
     //スレッショルド設定（ここで設定しない場合はメモリスイッチの設定で動作します）
     //gt_ThresholdSet(0x30);        //初期値は50h･･･設置状態(カバー厚など)により調整してください
@@ -152,7 +152,7 @@ void gtUartSetup()
     //背景描画
     gt_setCursor(0, 0);
     gt_CopyFrom(IMAGE_ADDR_PAGE0, 800, 800, 480, 0x91);   //p01_800x480.jpg ～ p03_800x480.jpg
-    delay(2000);
+    delay(3000);
 }
 
 ///////////////////////////////////////////////////

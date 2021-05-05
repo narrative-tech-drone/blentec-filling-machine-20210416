@@ -93,6 +93,7 @@ void gt_dispselect(){
         if(emg_on_state == true){
 //            pageNum = 1;
 //            emg_on_state = false;
+//      Serial.print("HIGH");
         }
     }
     switch(pageNum){
@@ -408,7 +409,7 @@ void gt_page02(){
                 case 7://LOCK(元fix表示)                                         //L_CUSTOM_SW;
                     lock_unlock();
                     pgch_flag = true;
-                    pulsecount_flag = true;
+                    pulsecount_flag = false;
                     break;
                 case 8://MENU                                         //MENU_SW
                     pageNum = 1;                                //page01に移動
@@ -424,7 +425,7 @@ void gt_page02(){
                 case 7://LOCK(元fix表示)                                         //L_CUSTOM_SW;
                     lock_unlock();
                     pgch_flag = true;
-                    pulsecount_flag = true;
+                    pulsecount_flag = false;
                     break;
                 }
             }
@@ -629,6 +630,7 @@ void gt_page04(){
             case 8:                                         //LOCK_SW
                 lock_unlock();
                 washing_stop();
+                pulsecount_flag = false;
                 break;
         }
         }else{
@@ -638,7 +640,7 @@ void gt_page04(){
                 gt_OutlineFontSize(10, 0, 0, 0); 
                 pgch_flag = true;
                 washing_flag = false;
-                pulsecount_flag = true;
+                pulsecount_flag = false;
                 wash_val_close();
                 break;
             }
@@ -930,6 +932,7 @@ void gt_page07(){
                 break;
             case 4:
                 lock_unlock();
+                pulsecount_flag = false;
                 pgch_flag = true;
                 break;
         }
@@ -937,6 +940,7 @@ void gt_page07(){
             switch (incomingByte3) {
             case 4:
                 lock_unlock();
+                pulsecount_flag = false;
                 pgch_flag = true;
                 break;
         }

@@ -223,16 +223,56 @@ void vol_cal_pulse()
   }
   //バルブを操作していないとき（充填していないとき）は現在値を計算するだけ
   
-
   if (lp_only_flag == true){
     //低圧の時
     if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol){
       valve_close_Lp();
       //kito 追加
-      Serial.println("closeLP");
-      Serial.println(vol);
+//      Serial.println("closeLP");
+//      Serial.println(vol);
       //kito ここまで
       delay(200);
+      digitalWrite(SOLV_PIN_PRESSURE, LOW);
+      delay(500);
+      lowpressure_flag = false;
+      if (low_reso_flag == true){
+        vol = (pulseP - pulseN) * 5;
+      }else{
+        vol = (pulseP - pulseN) / 2;
+      }
+      filling_vol_now = vol;
+      //kito 追加
+//      FlexiTimer2::stop();
+//      Serial.println(vol);
+      pulsecount_flag = false;
+      pulse_stop_flag = true;
+      _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now / 10;
+      SD_logging_data(filling_vol_now);
+      _eeprom.filling_num_accum++;
+      EEPROM.put(0x00, _eeprom);
+      
+//      delay(250);
+      pgch_flag = true;
+      //kito ここまで
+    } //高圧の時
+    else if(lowpressure_flag == false){
+      lowpressure_flag = true;
+      valve_close_Hp();
+//      Serial.println("closeHP");
+      delay(100);
+      valve_open_Lp();
+//      Serial.println("openLP");
+    }
+  }
+  else{
+    //低圧の時
+    if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol){
+      valve_close_Lp();
+      //kito 追加
+//      Serial.println("closeLP");
+//      Serial.println(vol);
+      //kito ここまで
+//      delay(200);
       digitalWrite(SOLV_PIN_PRESSURE, LOW);
       delay(350);
       lowpressure_flag = false;
@@ -242,50 +282,16 @@ void vol_cal_pulse()
         vol = (pulseP - pulseN) / 2;
       }
       filling_vol_now = vol;
-      //kito 追加
-      FlexiTimer2::stop();
-      Serial.println(vol);
-      _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now / 10;
-      pulsecount_flag = false;
-      pulse_stop_flag = true;
-      SD_logging_data(filling_vol_now);
-      _eeprom.filling_num_accum++;
-      EEPROM.put(0x00, _eeprom);
-      
-      delay(250);
-      pgch_flag = true;
-      //kito ここまで
-    } //高圧の時
-    else if(lowpressure_flag == false){
-      lowpressure_flag = true;
-      valve_close_Hp();
-      Serial.println("closeHP");
-      delay(100);
-      valve_open_Lp();
-      Serial.println("openLP");
-    }
-  }
-  else{
-    //低圧の時
-    if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol){
-      valve_close_Lp();
-      //kito 追加
-      Serial.println("closeLP");
-      Serial.println(vol);
-      //kito ここまで
-      delay(200);
-      digitalWrite(SOLV_PIN_PRESSURE, LOW);
-      delay(350);
       lowpressure_flag = false;
       //kito 追加
-      FlexiTimer2::stop();
-      Serial.println(vol);
+//      FlexiTimer2::stop();
+//      Serial.println(vol);
+      pulsecount_flag = false;
+      pulse_stop_flag = true;
       _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now / 10;
       SD_logging_data(filling_vol_now);
       _eeprom.filling_num_accum++;
       EEPROM.put(0x00, _eeprom);
-      pulsecount_flag = false;
-      pulse_stop_flag = true;
       delay(250);
       pgch_flag = true;
       //kito ここまで
@@ -293,10 +299,10 @@ void vol_cal_pulse()
     else if (((_eeprom.filling_vol_goal - _eeprom.prestop_offset1) <= vol) && (lowpressure_flag == false)){
       lowpressure_flag = true;
       valve_close_Hp();
-      Serial.println("closeHP");
-      delay(100);
+//      Serial.println("closeHP");
+      delay(50);
       valve_open_Lp();
-      Serial.println("openLP");
+//      Serial.println("openLP");
     }
   }
 
@@ -390,22 +396,20 @@ void vol_cal_pulse(){
 //new
 void Ppulse()
 {
-  if (pulsecount_flag == false)
-  {
-    return;
-  }
-
   if (pulsecount_flag == true)
   {
     pulseP++;
-    Serial.print("P");
-    Serial.println(pulseP);
+//    Serial.print("P");
+//    Serial.println(pulseP);
+  }else{
+    return;
   }
-  else if (washing_flag == true)
+  
+  if (washing_flag == true)
   {
     pulseP++;
-    Serial.print("W");
-    Serial.println(pulseP);
+//    Serial.print("W");
+//    Serial.println(pulseP);
   }
 }
 
@@ -465,7 +469,7 @@ void Npulse()
   if (pulsecount_flag == true)
   {
     pulseN++;
-    Serial.println("N");
+//    Serial.println("N");
     //    int i = vol_cal();
   }
   else

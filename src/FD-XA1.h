@@ -222,7 +222,6 @@ void vol_cal_pulse()
     vol = (pulseP - pulseN) / 2;
   }
   //バルブを操作していないとき（充填していないとき）は現在値を計算するだけ
-  
   if (lp_only_flag == true){
     //低圧の時
     if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol){
@@ -250,7 +249,6 @@ void vol_cal_pulse()
       SD_logging_data(filling_vol_now);
       _eeprom.filling_num_accum++;
       EEPROM.put(0x00, _eeprom);
-      
 //      delay(250);
       pgch_flag = true;
       //kito ここまで
@@ -305,7 +303,6 @@ void vol_cal_pulse()
 //      Serial.println("openLP");
     }
   }
-
   filling_vol_now = vol;
 }
 

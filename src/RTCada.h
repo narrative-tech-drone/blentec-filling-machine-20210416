@@ -61,5 +61,5 @@ void RTCloop() {
     rtcclock.RTCday = now.day();
     rtcclock.RTChour = now.hour();
     rtcclock.RTCminute = now.minute();
-    Serial.print("rtcloop");
+    Serial.println("rtcloop");
 }

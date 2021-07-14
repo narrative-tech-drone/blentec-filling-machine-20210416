@@ -117,8 +117,8 @@ void vol_cal_mix()
   if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol)
   {
     valve_close_Lp();
-    Serial.println("closeLP");
-    Serial.println(vol);
+//    Serial.println("closeLP");
+//    Serial.println(vol);
     delay(200);
     digitalWrite(SOLV_PIN_PRESSURE, LOW);
     delay(350);
@@ -126,7 +126,7 @@ void vol_cal_mix()
     lowpressure_flag = false;
     ad_vol_flag = false;
     FlexiTimer2::stop();
-    Serial.println(vol);
+//    Serial.println(vol);
     _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now;
     SD_logging_data(filling_vol_now);
     _eeprom.filling_num_accum++;
@@ -192,7 +192,7 @@ void vol_cal_ad()
     delay(350);
     pulsecount_flag = false;
     lowpressure_flag = false;
-    Serial.println(vol);
+//    Serial.println(vol);
   }
   else if (((_eeprom.filling_vol_goal - _eeprom.prestop_offset1) <= vol) && (lowpressure_flag == false))
   {
@@ -249,7 +249,7 @@ void vol_cal_pulse()
       SD_logging_data(filling_vol_now);
       _eeprom.filling_num_accum++;
       EEPROM.put(0x00, _eeprom);
-//      delay(250);
+      delay(250);
       pgch_flag = true;
       //kito ここまで
     } //高圧の時
@@ -267,8 +267,8 @@ void vol_cal_pulse()
     if ((_eeprom.filling_vol_goal - _eeprom.prestop_offset2) <= vol){
       valve_close_Lp();
       //kito 追加
-//      Serial.println("closeLP");
-//      Serial.println(vol);
+      Serial.print("cLP");
+      Serial.println(vol);
       //kito ここまで
 //      delay(200);
       digitalWrite(SOLV_PIN_PRESSURE, LOW);
@@ -283,11 +283,13 @@ void vol_cal_pulse()
       lowpressure_flag = false;
       //kito 追加
 //      FlexiTimer2::stop();
-//      Serial.println(vol);
+      Serial.print("log");
+      Serial.println(vol);
       pulsecount_flag = false;
       pulse_stop_flag = true;
       _eeprom.filling_vol_accum = _eeprom.filling_vol_accum + filling_vol_now / 10;
       SD_logging_data(filling_vol_now);
+      delay(250);
       _eeprom.filling_num_accum++;
       EEPROM.put(0x00, _eeprom);
       delay(250);
@@ -297,10 +299,10 @@ void vol_cal_pulse()
     else if (((_eeprom.filling_vol_goal - _eeprom.prestop_offset1) <= vol) && (lowpressure_flag == false)){
       lowpressure_flag = true;
       valve_close_Hp();
-//      Serial.println("closeHP");
+      Serial.println("closeHP");
       delay(50);
       valve_open_Lp();
-//      Serial.println("openLP");
+      Serial.println("openLP");
     }
   }
   filling_vol_now = vol;
@@ -332,7 +334,7 @@ void vol_cal_pulse_old()
   {
     valve_close_Lp();
     //kito 追加
-    Serial.println("closeLP");
+//    Serial.println("closeLP");
 //    Serial.println(vol);
     //kito ここまで
     delay(200);

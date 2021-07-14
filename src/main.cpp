@@ -218,6 +218,7 @@ void loop() {
 //    }
 if(digitalRead(XA_OUT2) == HIGH ){
       error_sensor = true;
+      Serial.print("se");
     }
     if( (error_sd == true) || (error_sensor == true)  ){
       error_flag = true;

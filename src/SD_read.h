@@ -79,7 +79,7 @@ void SD_initialize() {
 
 }
 
-void SD_logging_data(int data){
+void SD_logging_data(uint32_t data){
   File dataFile = SD.open(CSV_FILENAME, FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {
@@ -104,7 +104,7 @@ void SD_logging_data(int data){
 
     dataFile.close();
     // print to the serial port too:
-    Serial.print(data);
+    Serial.println(data);
   }
   // if the file isn't open, pop up an error:
   else {

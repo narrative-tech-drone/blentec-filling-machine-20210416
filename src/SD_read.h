@@ -113,7 +113,7 @@ void SD_logging_data(uint32_t data){
   }
 }
 
-void SD_logging_settingdata(int data){
+void SD_logging_settingdata(uint32_t data){
   File dataFile = SD.open(CSV_FILENAME, FILE_WRITE);
   // if the file is available, write to it:
   if (dataFile) {

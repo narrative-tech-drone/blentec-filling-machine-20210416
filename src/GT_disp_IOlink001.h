@@ -374,6 +374,7 @@ void gt_page02(){
                     _eeprom.calib_flag = false; 
                     _eeprom.filling_vol_goal = gt_keyanddisp5(X_PAGE2_SW3, Y_PAGE2_SW3);
                     EEPROM.put(0x00,_eeprom);
+                    SD_logging_settingdata(_eeprom.filling_vol_goal);
                     _eeprom.calib_flag = true; 
                     pgch_flag = true;
                     pulsecount_flag = false;
@@ -440,10 +441,11 @@ void gt_page02(){
 void gt_page13(){
     if(pgch_flag == true){
     //タッチパネル制御モード定義(カスタムスイッチモード)
-    gt_CustomSwitchMode(0, 3);              //ch=0,sn=5
+    gt_CustomSwitchMode(0, 4);              //ch=0,sn=5
     gt_CustomSwitch( 80, 230, 280, 130);    //SW1(充填目標値)
     gt_CustomSwitch(450, 230, 280, 130);    //SW2(充填回数)
     MENU_SW;                                //menu
+    LOCK_SW;                                //4 LOCK
 
     gt_TouchModeSelect(1);                  //マルチタッチモード(sn=1)
     gt_TouchDataTransmit(1);                //タッチパネル制御データ送信許可
@@ -452,7 +454,11 @@ void gt_page13(){
     //背景描画
     gt_setCursor(800, 0);
         if(digitalRead(SOLV_PIN_OPEN) == LOW){
-        gt_CopyFrom(IMAGE_ADDR_PAGE13A, 800, 800, 480, 0x91);
+            if(lock_flag == true){
+            gt_CopyFrom(IMAGE_ADDR_PAGE13B, 800, 800, 480, 0x91);
+        }else{
+            gt_CopyFrom(IMAGE_ADDR_PAGE13A, 800, 800, 480, 0x91);
+        }
     }else{
         gt_CopyFrom(IMAGE_ADDR_PAGE13, 800, 800, 480, 0x91);
     }
@@ -483,6 +489,7 @@ void gt_page13(){
     }
 
     if (incomingByte2 == 0x31) {
+        if(lock_flag == false){
         switch (incomingByte3) {
             case 1:
                 digitalWrite(SOLV_PIN_OPEN,HIGH);
@@ -497,7 +504,21 @@ void gt_page13(){
                 pgch_flag = true;
                 digitalWrite(SOLV_PIN_OPEN,LOW);
                 break;
-        }
+            case 4://LOCK
+                lock_unlock();
+                pgch_flag = true;
+                pulsecount_flag = false;
+                break;
+            }
+        }else{
+                switch (incomingByte3) {
+                case 4://LOCK
+                    lock_unlock();
+                    pgch_flag = true;
+                    pulsecount_flag = false;
+                    break;
+                }
+            }
         gt_TouchChannelSelect(0);           //タッチパネル制御チャンネル選択
     }
     }
